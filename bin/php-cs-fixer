@@ -1,0 +1,2 @@
+#!/bin/bash
+docker exec -i app /var/www/vendor/bin/php-cs-fixer "$@"

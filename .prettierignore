@@ -1,0 +1,49 @@
+# .prettierignore for Laravel Project
+
+# Markdown documentation
+*.md
+*.mdx
+
+# Laravel specific
+storage/
+bootstrap/cache/
+public/storage
+public/hot
+public/css
+public/js
+public/mix-manifest.json
+
+# Environment
+.env
+.env.backup
+.phpunit.result.cache
+
+# Dependencies
+/node_modules
+/vendor
+
+# Composer
+composer.lock
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+coverage/
+
+# Compiled assets
+/public/build
+
+# Ignore specific MD files that should keep formatting
+!/README.md  # Format README
+!/docs/api/README.md  # Format API docs

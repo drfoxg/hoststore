@@ -1,0 +1,48 @@
+# phpstan.neon
+parameters:
+    # Уровень строгой проверки: 0–9 (рекомендую 5–6 для разработки, 7–8 для CI)
+    level: 6
+
+    # Папки, которые будем проверять
+    paths:
+        - app
+        - database
+        - routes
+        - tests
+
+    # Исключаем vendor, storage, bootstrap
+    excludePaths:
+        - %currentWorkingDirectory%/vendor/*
+        - %currentWorkingDirectory%/storage/*
+        - %currentWorkingDirectory%/bootstrap/*
+        - %currentWorkingDirectory%/database/migrations/*
+
+    # Larastan специфичные настройки
+    checkMissingIterableValueType: true
+    checkGenericClassInNonGenericObjectType: true
+    inferPrivatePropertyTypeFromConstructor: true
+    treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        - '#Call to an undefined method Illuminate\\Support\\Facades\\.*#'
+        - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Builder::.*#'
+        # Ложные ошибки фасадов и глобальных хелперов
+        - '#Call to an undefined method Illuminate\\Database\\Schema\\.*::comment\(\)#'
+        - '#Call to an undefined method Illuminate\\Database\\Schema\\.*::notnull\(\)#'
+        - '#Call to an undefined method Illuminate\\Support\\Facades\\.*#'
+        - '#Call to an undefined property Illuminate\\Database\\Eloquent\\Builder::.*#'
+        - '#Call to an undefined method App\\Providers\\.*::asset\(\)#'
+        - '#Call to an undefined function asset\(\)#'
+        - '#Call to an undefined function route\(\)#'
+        - '#Call to an undefined function url\(\)#'
+        - '#Call to an undefined function config\(\)#'
+
+    # Сканируем ключевые файлы Laravel
+    scanFiles:
+        - bootstrap/app.php
+        - routes/web.php
+        - routes/api.php
+
+
+includes:
+    # Подключаем Larastan для Laravel
+    - vendor/larastan/larastan/extension.neon

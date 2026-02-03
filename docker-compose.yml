@@ -1,0 +1,106 @@
+version: "3.9"
+
+services:
+    app:
+        build:
+            context: .
+            dockerfile: docker/php/Dockerfile.8.3
+        image: testprj-php:8.3
+        container_name: testprj-app
+        working_dir: /var/www
+        restart: unless-stopped
+        tty: true
+        volumes:
+            - /tmp:/tmp
+            - ./:/var/www
+            - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+        networks:
+            - app-network-testprj
+        depends_on:
+            - db
+
+    worker:
+        image: testprj-php:8.3
+        container_name: testprj-worker
+        working_dir: /var/www
+        restart: unless-stopped
+        command: php artisan queue:work database --sleep=3 --tries=3 --max-time=3600
+        volumes:
+            - ./:/var/www
+            - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+        networks:
+            - app-network-testprj
+        depends_on:
+            - app
+            - redis
+
+    web:
+        image: nginx:latest
+        container_name: testprj-nginx
+        restart: unless-stopped
+        tty: true
+        volumes:
+            - ./:/var/www/
+            - ./docker/nginx/conf.d/:/etc/nginx/conf.d/
+            - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+        networks:
+            - app-network-testprj
+            - nginxproxyman
+        depends_on:
+            - app
+
+    db:
+        image: "postgres:16"
+        container_name: testprj-db
+        environment:
+            # POSTGRES_USER: ${DB_USERNAME}_local_user
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+            POSTGRES_DB: testprj_local
+            TZ: Europe/Moscow
+        volumes:
+            - "pgsql-testprj:/var/lib/postgresql/data"
+        ports:
+            - 127.0.0.1:33386:3306 # ❗ dev only
+            - 127.0.0.1:5482:5432 # ❗ dev only
+        networks:
+            - app-network-testprj
+        mem_limit: 512m # RAM лимит
+        memswap_limit: 1g # swap лимит
+
+    redis:
+        image: "redis:alpine"
+        container_name: testprj-redis
+        restart: unless-stopped
+        tty: true
+        # Connecting at browser
+        # redis://username:password@87.251.78.17:6973/0
+        # username: default
+        # password: ${REDIS_PASSWORD}
+        command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD}
+        ports:
+            - 6379:6379
+        volumes:
+            - redis-testprj:/var/lib/redis
+            - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
+        environment:
+            - REDIS_REPLICATION_MODE=master
+        networks:
+            - app-network-testprj
+
+networks:
+    app-network-testprj:
+        driver: bridge
+    nginxproxyman:
+        external: true
+        name: nginxproxyman
+    sqldev-backend:
+        external: true
+        name: sqldev-backend
+
+volumes:
+    redis-testprj:
+        driver: local
+        name: redis-testprj
+    pgsql-testprj:
+        driver: local
+        name: pgsql-testprj

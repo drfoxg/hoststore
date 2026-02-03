@@ -1,0 +1,30 @@
+{
+    "version": "0.2",
+    "ignorePaths": [],
+    "dictionaryDefinitions": [
+        {
+            "name": "custom-dictionary",
+            "path": "./.cspell/custom-dictionary.txt",
+            "addWords": true
+        }
+    ],
+    "dictionaries": ["custom-dictionary"],
+    "words": [
+        "триграммного",
+        "Dispatchable",
+        "ILIKE",
+        "LARAVEL",
+        "memswap",
+        "nginxproxyman",
+        "pgsql",
+        "phpstorm",
+        "phpunit",
+        "Queueable",
+        "requirepass",
+        "sqldev",
+        "testprj",
+        "trgm"
+    ],
+    "ignoreWords": [],
+    "import": []
+}
