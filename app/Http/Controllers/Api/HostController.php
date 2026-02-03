@@ -24,7 +24,7 @@ class HostController extends Controller
         if ($search = $request->searchQuery()) {
             $query->where(function ($q) use ($search) {
                 $q->whereRaw('hostname ILIKE ?', ['%' . $search . '%'])
-                  ->orWhereRaw('ip::text = ?', [$search]);
+                  ->orWhere('ip', '=', $search . '/32');
             });
         }
 
