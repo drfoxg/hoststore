@@ -18,3 +18,6 @@ fresh:
 
 logs:
 	docker compose logs -f
+
+test:
+	docker compose exec app php artisan test

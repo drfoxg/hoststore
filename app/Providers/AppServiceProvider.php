@@ -6,6 +6,9 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Http\Request;
+use App\Models\Host;
+use App\Policies\HostPolicy;
+use Illuminate\Support\Facades\Gate;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,6 +25,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(Host::class, HostPolicy::class);
+
         // Rate limiter для rename операций: 10 запросов в минуту на хост
         RateLimiter::for('host-rename', function (Request $request) {
             $hostId = $request->route('host')?->id ?? $request->route('host');

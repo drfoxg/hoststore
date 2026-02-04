@@ -4,63 +4,46 @@ namespace App\Policies;
 
 use App\Models\Host;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class HostPolicy
 {
     /**
-     * Determine whether the user can view any models.
+     * Просмотр списка хостов — все авторизованные
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        return true;
     }
 
     /**
-     * Determine whether the user can view the model.
+     * Просмотр одного хоста — все авторизованные
      */
     public function view(User $user, Host $host): bool
     {
-        return false;
+        return true;
     }
 
     /**
-     * Determine whether the user can create models.
+     * Создание хоста — все авторизованные
      */
     public function create(User $user): bool
     {
-        return false;
+        return true;
     }
 
     /**
-     * Determine whether the user can update the model.
+     * Переименование хоста — только admin
      */
-    public function update(User $user, Host $host): bool
+    public function rename(User $user, Host $host): bool
     {
-        return false;
+        return $user->isAdmin();
     }
 
     /**
-     * Determine whether the user can delete the model.
+     * Удаление хоста — только admin
      */
     public function delete(User $user, Host $host): bool
     {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, Host $host): bool
-    {
-        return false;
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, Host $host): bool
-    {
-        return false;
+        return $user->isAdmin();
     }
 }

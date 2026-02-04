@@ -1,0 +1,462 @@
+{
+	"info": {
+		"_postman_id": "testprj-hosts-api",
+		"name": "TestPrj Hosts API",
+		"description": "API для управления хостами и асинхронными операциями",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://testprj.sulfurfun.ru",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "hostId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "operationId",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('token', jsonData.token);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"drfoxg@gmail.com\",\n    \"password\": \"change me\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "login"]
+						},
+						"description": "Авторизация. Токен сохраняется автоматически."
+					},
+					"response": []
+				},
+				{
+					"name": "Me",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/me",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "me"]
+						},
+						"description": "Информация о текущем пользователе"
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/logout",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "logout"]
+						},
+						"description": "Выход из системы (удаление токена)"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Hosts",
+			"item": [
+				{
+					"name": "Create Host",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('hostId', jsonData.data.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"hostname\": \"app-01\",\n    \"ip\": \"10.0.1.5\",\n    \"tags\": [\"web\", \"prod\"]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/hosts",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "hosts"]
+						},
+						"description": "Создать новый хост"
+					},
+					"response": []
+				},
+				{
+					"name": "List Hosts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/hosts",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "hosts"]
+						},
+						"description": "Получить список хостов с обычной пагинацией"
+					},
+					"response": []
+				},
+				{
+					"name": "Search Hosts by Hostname",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/hosts?q=app",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "hosts"],
+							"query": [
+								{
+									"key": "q",
+									"value": "app",
+									"description": "Поиск по части hostname (ILIKE)"
+								}
+							]
+						},
+						"description": "Поиск хостов по части hostname"
+					},
+					"response": []
+				},
+				{
+					"name": "Search Hosts by IP",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/hosts?q=10.0.1.5",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "hosts"],
+							"query": [
+								{
+									"key": "q",
+									"value": "10.0.1.5",
+									"description": "Поиск по точному IP"
+								}
+							]
+						},
+						"description": "Поиск хостов по точному IP адресу"
+					},
+					"response": []
+				},
+				{
+					"name": "List Hosts (Keyset Pagination)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/hosts?page[size]=5",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "hosts"],
+							"query": [
+								{
+									"key": "page[size]",
+									"value": "5",
+									"description": "Количество записей на странице"
+								}
+							]
+						},
+						"description": "Первая страница с keyset пагинацией"
+					},
+					"response": []
+				},
+				{
+					"name": "List Hosts (Next Page)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/hosts?page[size]=5&page[after]={{hostId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "hosts"],
+							"query": [
+								{
+									"key": "page[size]",
+									"value": "5"
+								},
+								{
+									"key": "page[after]",
+									"value": "{{hostId}}",
+									"description": "Курсор: ID последнего элемента предыдущей страницы"
+								}
+							]
+						},
+						"description": "Следующая страница (keyset)"
+					},
+					"response": []
+				},
+				{
+					"name": "Rename Host (Admin Only)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 202) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('operationId', jsonData.operation_id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Idempotency-Key",
+								"value": "{{$guid}}",
+								"description": "Уникальный ключ для идемпотентности (UUID)"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"new_hostname\": \"app-01-renamed\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/hosts/{{hostId}}/rename",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "hosts", "{{hostId}}", "rename"]
+						},
+						"description": "Переименовать хост (только admin). Возвращает operation_id."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Operations",
+			"item": [
+				{
+					"name": "Get Operation Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/operations/{{operationId}}",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "operations", "{{operationId}}"]
+						},
+						"description": "Получить статус операции: pending, processing, done, failed"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Admin",
+			"item": [
+				{
+					"name": "[Admin] List Hosts",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/hosts",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "admin", "hosts"]
+						},
+						"description": "Список хостов (admin route)"
+					},
+					"response": []
+				},
+				{
+					"name": "[Admin] Rename Host",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Idempotency-Key",
+								"value": "{{$guid}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"new_hostname\": \"admin-renamed-host\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/admin/hosts/{{hostId}}/rename",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "admin", "hosts", "{{hostId}}", "rename"]
+						},
+						"description": "Переименовать хост через admin route"
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

@@ -13,9 +13,12 @@ use App\Jobs\RenameHostJob;
 use App\Models\Host;
 use App\Models\Operation;
 use Illuminate\Http\Response;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class HostController extends Controller
 {
+    use AuthorizesRequests;
+
     public function index(IndexHostRequest $request)
     {
         $query = Host::query();
@@ -23,8 +26,11 @@ class HostController extends Controller
         // Поиск по hostname (ILIKE, использует pg_trgm) или точному IP
         if ($search = $request->searchQuery()) {
             $query->where(function ($q) use ($search) {
-                $q->whereRaw('hostname ILIKE ?', ['%' . $search . '%'])
-                  ->orWhere('ip', '=', $search . '/32');
+                $q->whereRaw('hostname ILIKE ?', ['%' . $search . '%']);
+
+                if (filter_var($search, FILTER_VALIDATE_IP)) {
+                    $q->orWhereRaw('ip = ?::inet', [$search]);
+                }
             });
         }
 
@@ -119,6 +125,8 @@ class HostController extends Controller
 
     public function rename(RenameHostRequest $request, Host $host)
     {
+        $this->authorize('rename', $host);
+
         $idempotencyKey = $request->idempotencyKey();
 
         // Идемпотентность: вернуть существующую операцию
