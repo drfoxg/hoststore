@@ -14,6 +14,7 @@ use App\Models\Host;
 use App\Models\Operation;
 use Illuminate\Http\Response;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Log;
 
 class HostController extends Controller
 {
@@ -32,6 +33,11 @@ class HostController extends Controller
                     $q->orWhereRaw('ip = ?::inet', [$search]);
                 }
             });
+
+            Log::info('Hosts search executed', [
+                'query' => $search,
+                'type'  => filter_var($search, FILTER_VALIDATE_IP) ? 'ip' : 'hostname',
+            ]);
         }
 
         // Keyset пагинация
@@ -128,10 +134,21 @@ class HostController extends Controller
         $this->authorize('rename', $host);
 
         $idempotencyKey = $request->idempotencyKey();
+        $correlationId = $request->attributes->get('correlation_id');
+
+        Log::info('Host rename requested', [
+            'host_id' => $host->id,
+            'new_hostname' => $request->validated('new_hostname'),
+            'idempotency_key' => $idempotencyKey,
+        ]);
 
         // Идемпотентность: вернуть существующую операцию
         $existing = Operation::where('idempotency_key', $idempotencyKey)->first();
         if ($existing) {
+            Log::info('Returning existing operation (idempotency)', [
+                'operation_id' => $existing->id,
+            ]);
+
             return response()->json(
                 ['operation_id' => $existing->id],
                 Response::HTTP_ACCEPTED
@@ -145,7 +162,14 @@ class HostController extends Controller
             'idempotency_key' => $idempotencyKey,
         ]);
 
-        RenameHostJob::dispatch($operation);
+        Log::info('Operation created', [
+            'operation_id' => $operation->id,
+        ]);
+
+        // Передаём correlation_id в Job
+        $job = new RenameHostJob($operation);
+        $job->setCorrelationId($correlationId);
+        dispatch($job);
 
         return response()->json(
             ['operation_id' => $operation->id],

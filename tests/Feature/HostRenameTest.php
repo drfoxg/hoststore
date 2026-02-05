@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\OperationStatus;
 use App\Jobs\RenameHostJob;
 use App\Models\Host;
+use App\Models\User;
 use App\Models\Operation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
@@ -15,9 +16,16 @@ class HostRenameTest extends TestCase
 {
     use RefreshDatabase;
 
+    private User $user;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->user = User::factory()->admin()->create();
+    }
+
     public function test_rename_full_cycle_to_done(): void
     {
-        // Используем sync очередь — Job выполнится сразу
         config(['queue.default' => 'sync']);
 
         $host = Host::create([
@@ -26,18 +34,19 @@ class HostRenameTest extends TestCase
             'tags' => [],
         ]);
 
-        $response = $this->patchJson("/api/hosts/{$host->id}/rename", [
-            'new_hostname' => 'new-hostname',
-        ], [
-            'Idempotency-Key' => Str::uuid()->toString(),
-        ]);
+        $response = $this->actingAs($this->user)
+            ->patchJson("/api/admin/hosts/{$host->id}/rename", [
+                'new_hostname' => 'new-hostname',
+            ], [
+                'Idempotency-Key' => Str::uuid()->toString(),
+            ]);
 
         $response->assertStatus(202);
 
         $operationId = $response->json('operation_id');
 
-        // Проверяем статус операции
-        $statusResponse = $this->getJson("/api/operations/{$operationId}");
+        $statusResponse = $this->actingAs($this->user)
+            ->getJson("/api/operations/{$operationId}");
 
         $statusResponse
             ->assertStatus(200)
@@ -45,7 +54,6 @@ class HostRenameTest extends TestCase
             ->assertJsonPath('error', null)
             ->assertJsonPath('host.hostname', 'new-hostname');
 
-        // Проверяем что хост переименован в БД
         $this->assertDatabaseHas('hosts', [
             'id' => $host->id,
             'hostname' => 'new-hostname',
@@ -68,30 +76,27 @@ class HostRenameTest extends TestCase
 
         $idempotencyKey = Str::uuid()->toString();
 
-        // Первый запрос
-        $response1 = $this->patchJson("/api/hosts/{$host->id}/rename", [
-            'new_hostname' => 'renamed-host',
-        ], [
-            'Idempotency-Key' => $idempotencyKey,
-        ]);
+        $response1 = $this->actingAs($this->user)
+            ->patchJson("/api/hosts/{$host->id}/rename", [
+                'new_hostname' => 'renamed-host',
+            ], [
+                'Idempotency-Key' => $idempotencyKey,
+            ]);
 
         $response1->assertStatus(202);
         $operationId1 = $response1->json('operation_id');
 
-        // Повторный запрос с тем же ключом
-        $response2 = $this->patchJson("/api/hosts/{$host->id}/rename", [
-            'new_hostname' => 'renamed-host',
-        ], [
-            'Idempotency-Key' => $idempotencyKey,
-        ]);
+        $response2 = $this->actingAs($this->user)
+            ->patchJson("/api/hosts/{$host->id}/rename", [
+                'new_hostname' => 'renamed-host',
+            ], [
+                'Idempotency-Key' => $idempotencyKey,
+            ]);
 
         $response2->assertStatus(202);
         $operationId2 = $response2->json('operation_id');
 
-        // Должен вернуться тот же operation_id
         $this->assertEquals($operationId1, $operationId2);
-
-        // В БД только одна операция
         $this->assertCount(1, Operation::all());
     }
 }

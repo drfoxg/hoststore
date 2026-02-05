@@ -8,8 +8,11 @@
             "addWords": true
         }
     ],
-    "dictionaries": ["custom-dictionary"],
+    "dictionaries": [
+        "custom-dictionary"
+    ],
     "words": [
+        "логгеру",
         "триграммного",
         "Dispatchable",
         "ILIKE",

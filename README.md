@@ -35,6 +35,7 @@ docker-compose up -d
 ```
 
 Сервисы:
+
 - `testprj-app` — PHP-FPM
 - `testprj-nginx` — веб-сервер
 - `testprj-db` — PostgreSQL
@@ -222,6 +223,54 @@ docker-compose up -d queue
 2. Проверяет уникальность нового hostname
 3. Переименовывает хост в транзакции
 4. Ставит статус `done` или `failed`
+
+## Логирование
+
+### Correlation ID
+
+Каждый HTTP-запрос получает уникальный `correlation_id`, который связывает все события запроса: контроллер, Job в очереди, внешние вызовы.
+
+**Заголовки:**
+- Можно передать свой: `X-Correlation-ID: <uuid>`
+- Если не передан — генерируется автоматически
+- Возвращается в ответе: `X-Correlation-ID: <uuid>`
+
+**Формат логов:**
+
+```
+[2026-02-03 18:00:00] [527f12df-3991-4bca-b67e-3e655a868275] local.INFO: Host rename requested {"host_id":"abc"}
+[2026-02-03 18:00:00] [527f12df-3991-4bca-b67e-3e655a868275] local.INFO: Operation created {"operation_id":"xyz"}
+[2026-02-03 18:00:01] [527f12df-3991-4bca-b67e-3e655a868275] local.INFO: RenameHostJob started {"operation_id":"xyz"}
+[2026-02-03 18:00:01] [527f12df-3991-4bca-b67e-3e655a868275] local.INFO: RenameHostJob completed {"operation_id":"xyz"}
+```
+
+**Поиск по логам:**
+
+```bash
+# Все события одного запроса
+grep "527f12df-3991-4bca-b67e-3e655a868275" storage/logs/laravel.log
+
+# Ошибки с correlation_id
+grep "ERROR" storage/logs/laravel.log | grep "527f12df"
+```
+
+### Уровни логирования
+
+| Уровень | Когда использовать |
+| ------- | ------------------ |
+| `debug` | Детали для отладки, SQL-запросы |
+| `info` | Успешные операции, бизнес-события |
+| `warning` | Подозрительное поведение, но система работает |
+| `error` | Операция не выполнена, требует внимания |
+| `critical` | Система может упасть, срочное исправление |
+
+**Настройка уровня в `.env`:**
+
+```dotenv
+LOG_LEVEL=debug     # Всё (для разработки)
+LOG_LEVEL=info      # info и выше (production)
+LOG_LEVEL=warning   # warning, error, critical
+```
 
 ## Postman
 
