@@ -68,8 +68,7 @@ ENV LC_ALL ru_RU.UTF-8
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) \
-        pdo_mysql \
+    && docker-php-ext-install -j$(nproc) \        
         mbstring \
         zip \
         exif \
@@ -77,8 +76,11 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
         gd \
         bcmath \
         sockets \
+        pdo \
+        pdo_mysql \
         pdo_pgsql \
-        pgsql
+        pgsql \
+        sockets     
 
 # Install Redis extension
 RUN pecl install redis && docker-php-ext-enable redis
